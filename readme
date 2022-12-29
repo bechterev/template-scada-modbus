@@ -1,0 +1,11 @@
+Create migration
+  npm run knex migrate:make create-protocolParameters-table
+
+Apply migration on container
+  docker-compose exec server knex migrate:latest --knexfile src/database/knexfile.ts --env development
+
+Create seed
+  npm run knex seed:make initial
+
+Apply seeds on container
+  docker-compose exec server knex seed:run --knexfile src/database/knexfile.ts --env development

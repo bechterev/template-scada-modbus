@@ -1,0 +1,38 @@
+{
+  "name": "template-scada-modbus",
+  "version": "1.0.0",
+  "description": "for quickle to develop scada system",
+  "main": "main.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc",
+    "start": "./node_modules/.bin/tsc-watch --onSuccess \"node ./build/main.js\"",
+    "knex": "./node_modules/.bin/knex --knexfile src/database/knexfile.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/bechterev/template-scada-modbus.git"
+  },
+  "author": "Vitalii Bekhterev",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/bechterev/template-scada-modbus/issues"
+  },
+  "homepage": "https://github.com/bechterev/template-scada-modbus#readme",
+  "devDependencies": {
+    "@types/node": "^18.11.18",
+    "ts-node": "^10.9.1",
+    "tsc-watch": "^6.0.0",
+    "typescript": "^4.9.4"
+  },
+  "dependencies": {
+    "@types/express": "^4.17.15",
+    "@types/pg": "^8.6.6",
+    "apollo-server-express": "^3.11.1",
+    "express": "^4.18.2",
+    "graphql": "^16.6.0",
+    "knex": "^2.3.0",
+    "pg": "^8.8.0",
+    "uuid": "^9.0.0"
+  }
+}
