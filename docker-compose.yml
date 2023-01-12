@@ -12,11 +12,18 @@ services:
       - "4000:4000"
     depends_on:
       - db
+      - rabbitmq
     environment:
       - POSTGRES_DB=fetcher
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_HOST=db
+      - RABBITMQ_DEFAULT_PASS=wolves
+      - RABBITMQ_DEFAULT_USER=roger
+      - RABBIT_URL=amqp://roger:wolves@rabbitmq:5672
+      - CYCLE_INTERVAL=5000
+      - CYCLE_QUEUE_NAME=modbusCycle
+      - CYCLE_MODBUS_PORT=5020
     volumes:
       - ./:/usr/src/app
       - /usr/src/app/node_modules
@@ -24,6 +31,8 @@ services:
       - database-net
     links:
       - db:db
+      - rabbitmq:rabbitmq
+      - modbus-server:modbus-server
     entrypoint: ["npm", "run", "start"]
   db:
     image: postgres:12
@@ -36,3 +45,24 @@ services:
     networks:
       - database-net
       - default
+  rabbitmq:
+    image: rabbitmq:3-management
+    environment:
+      - "RABBITMQ_DEFAULT_PASS=wolves"
+      - "RABBITMQ_DEFAULT_USER=roger"
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - database-net
+  modbus-server:
+    container_name: modbus-server
+    image: oitc/modbus-server
+    restart: always
+    command: -f /server_config.json
+    ports:
+      - 5020:5020
+    volumes:
+      - ./server_config.json:/server_config.json:ro
+    networks:
+      - database-net

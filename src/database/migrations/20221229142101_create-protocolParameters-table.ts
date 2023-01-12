@@ -13,6 +13,7 @@ export async function up(knex: Knex): Promise<void> {
     table.string('data_type').notNullable();
     table.float('coef').notNullable().defaultTo(0);
     table.integer('byte_order').notNullable().defaultTo(0);
+    table.string('group').notNullable();
   })
 }
 

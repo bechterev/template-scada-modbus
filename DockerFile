@@ -17,6 +17,7 @@ COPY . .
 # Compile TypeScript source
 RUN npm run build
 
+RUN ls ./node_modules
 # RUN knex migrate:latest --knexfile ./build/database/knexfile.js
 
 EXPOSE 3000

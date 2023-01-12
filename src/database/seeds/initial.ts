@@ -30,6 +30,8 @@ export async function seed(knex: Knex): Promise<void> {
     await knex("devices").insert([
         { id: '023449fd-42a7-46ee-a875-7d34724dd62e', name: "kust2-1", production: 'irz',
           protocolId: 'ebf6a8ac-1dbe-4947-b5ec-554f73996b0e', ip: '170.40.15.22', modAddress: 240 },
+        { id: '023449fd-42a7-46ee-a875-7d34724dd68d', name: "kust2-2", production: 'irz',
+          protocolId: 'ebf6a8ac-1dbe-4947-b5ec-554f73996b0e', ip: '170.40.15.22', modAddress: 242 },
         { id: 'd5c2636f-3435-45fd-98cf-c1d27d8d08e3', name: "kust2-3", production: 'electon',
           protocolId: '59de44f2-b823-45d8-b2c6-cd785a250db2', ip: '170.22.6.150', modAddress: 50 },
         { id: '3a4798fa-c13c-40bc-b701-5ad052941d6b', name: "kust7-1", production: 'irz',
@@ -38,10 +40,13 @@ export async function seed(knex: Knex): Promise<void> {
 
     await knex("protocolParameters").insert([
         { id: '2460f398-8da2-46bd-afc5-313ba8b6ff0f', protocolId: "ebf6a8ac-1dbe-4947-b5ec-554f73996b0e",
-          alias: 'ia', address: 250, read_func: 4, write_func: 0, data_type: 'uint16', coef: 0, byte_order: 0 },
+          alias: 'ia', address: 250, read_func: 4, write_func: 0, data_type: 'uint16', coef: 0, byte_order: 0,
+          group: 'state' },
         { id: '37aeec0d-0441-473e-a113-4c914205deaf', protocolId: "ebf6a8ac-1dbe-4947-b5ec-554f73996b0e",
-          alias: 'ib', address: 251, read_func: 4, write_func: 0, data_type: 'uint16', coef: 0, byte_order: 0 },
+          alias: 'ib', address: 251, read_func: 4, write_func: 0, data_type: 'uint16', coef: 0, byte_order: 0,
+          group: 'version' },
         { id: '1c82b87d-bd63-4654-ae7f-cfa9782f797b', protocolId: "a3c37466-b3aa-461e-ac8e-f7ab8827ab9d",
-          alias: 'ua', address: 258, read_func: 4, write_func: 0, data_type: 'uint16', coef: 0, byte_order: 0 }
+          alias: 'ua', address: 258, read_func: 4, write_func: 0, data_type: 'uint16', coef: 0, byte_order: 0,
+          group: 'general' }
     ]);
 };
