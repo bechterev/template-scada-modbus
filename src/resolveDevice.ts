@@ -1,6 +1,9 @@
 import knex from 'knex'
+import { generateToken, User, verifyPassword, verifyToken } from './auth';
 import db from './database/dataBaseConnect'
+import DatabaseService from './services/db';
 
+const dbService = new DatabaseService();
 export const resolvers = {
   
   Mutation: {
@@ -37,7 +40,26 @@ export const resolvers = {
         .insert({ protocol, alias, address, read_func, write_func, data_type, coef, byte_order });
 
         return protocolParameter;
+      },
+
+    login: async (_: any, { email, password }: {email: string, password: string}) => {
+      const user: User = await dbService.checkUser(email);
+      if (!user) {
+        throw new Error('Invalid email or password');
       }
+
+      const isValidPassword = await verifyPassword(password, user.password);
+      if (!isValidPassword) {
+        throw new Error('Invalid email or password');
+      }
+
+      const token = generateToken(user);
+      user.token = token
+
+      return {
+        ...user
+      };
+    },
   },
 
   Query: {
@@ -46,7 +68,6 @@ export const resolvers = {
     },
     device: async(_: any, { id }: { id: string }) => {
       const result = await db.select("*").from("devices").where({ id }).first();
-      console.log(id, result)
       return result;
     },
     protocols: async(_: any, {}) => {
@@ -57,6 +78,18 @@ export const resolvers = {
     },
     protocolParameters: async(_: any, {}) => {
       return await db.select("*").from("protocolParameters");
+    },
+    users: async(_: any, {}) => {
+      return await db.select("*").from("users");
+    },
+    user: async(_: any, { userId }: { userId: string }) => {
+      return await db.select("*").from("users").where({ id: userId }).first();
+    },
+    me: async(_: any, args: any, context: any) => {
+      const { token } = context;
+      const cleanToken = token.replaceAll("\"", "").trim();
+      const user: any = verifyToken(cleanToken);
+      return await db.select("*").from("users").where({ id: user.id }).first();
     }
   },
   Device: {

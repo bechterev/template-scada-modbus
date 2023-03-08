@@ -24,6 +24,8 @@ services:
       - CYCLE_INTERVAL=5000
       - CYCLE_QUEUE_NAME=modbusCycle
       - CYCLE_MODBUS_PORT=5020
+      - CYCLE_MODBUS_HOST=modbus-server
+      - JWT_SECRET=g2Lod@543.!
     volumes:
       - ./:/usr/src/app
       - /usr/src/app/node_modules
@@ -64,5 +66,11 @@ services:
       - 5020:5020
     volumes:
       - ./server_config.json:/server_config.json:ro
+    networks:
+      - database-net
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
     networks:
       - database-net

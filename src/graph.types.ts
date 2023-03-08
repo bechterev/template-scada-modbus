@@ -33,6 +33,15 @@ export const typeDefs = gql`
     coef: Float!
     byte_order: Int!
   }
+
+  type User {
+    id: ID!
+    name: String!
+    email: String!
+    password: String!
+    role: Int!
+    token: String
+  }
   
   type Query {
     devices: [Device]
@@ -40,6 +49,9 @@ export const typeDefs = gql`
     protocols: [Protocol]
     protocolTypes: [ProtocolType]
     protocolParameters: [ProtocolParameter]
+    users: [User]
+    user(userId: ID!): User
+    me: User
   }
   
   type Mutation {
@@ -48,4 +60,5 @@ export const typeDefs = gql`
     createProtocol(id: ID!, description: String!, production: String!, protocol_type: String!): Protocol
     createProtocolParameter(id: ID!, protocol: String!, alias: String!, address: Int!,
       read_func: Int!, write_func: Int!, data_type: String!, coef: Float!, byte_order: Int!): ProtocolParameter
+    login(email: String!, password: String!): User
   }`;

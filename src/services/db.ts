@@ -3,6 +3,11 @@ import "reflect-metadata";
 import { autoInjectable } from 'tsyringe';
 import db from '../database/dataBaseConnect';
 
+interface Protocol {
+  id: string,
+  name: string
+}
+
 @autoInjectable()
 export default class DatabaseService {
   private db: Knex<any, unknown[]> = undefined;
@@ -18,11 +23,15 @@ export default class DatabaseService {
     return await this.db.select('*').from('users');
   }*/
 
+  async checkUser(email: string) {
+    return await this.db.select('*').from('users').where({email}).first();
+  }
+
   async getProtocols() {
     return await this.db.select('*').from('protocols');
   }
 
-  async getProtocolsByName(name: string) {
+  async getProtocolsByName(name: string) : Promise<Protocol> {
     return await this.db.select('*').from('protocolTypes').where({ name }).first();
   }
 
@@ -34,7 +43,7 @@ export default class DatabaseService {
     return await this.db.select('*').from('protoclTypes');
   }
 
-  async initStartData(protocolType: {id: string, name: string}) {
+  async initStartData(protocolType: Protocol): Promise<any[]> {
 
     return await this.db.select([
         'devices.id', 

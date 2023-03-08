@@ -1,14 +1,12 @@
-export type GroupedObjects = { [key: string]: Array<any>};
-
-export async function groupByProperty(arr: Array<any>, prop: string): Promise<GroupedObjects> {
+export async function groupByProperty<T>(arr: T[], prop: keyof T): Promise<Record<string, T[]>> {
   return arr.reduce((acc, obj) => {
-    const key = obj[prop];
+    const key = obj[prop].toString();
     if (!acc[key]) {
       acc[key] = [];
     }
     acc[key].push(obj);
     return acc;
-  }, {} as GroupedObjects);
+  }, {} as Record<string, T[]>);
 }
 
 export async function sortByProperty(array: any[], ...fields: string[]): Promise<any[]> {

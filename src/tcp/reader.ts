@@ -1,4 +1,5 @@
 import ModbusRTU  from 'modbus-serial';
+import { DeviceWithParameters } from './cycles';
 import { sendToQueue } from './worker';
 
 
@@ -9,6 +10,7 @@ interface DeviceData {
     device: string;
     values: any;
     parameters: any;
+    time: number;
 }
 
 interface Device {
@@ -26,15 +28,15 @@ interface Register {
   read_func: number;
 }
 
-export async function run(data: [ip: string, devices: Device[]]) {
+export async function run(data: [ip: string, deviceWithParameters: DeviceWithParameters]) {
     try {
-        const [ip, devices] = data;
+        const [ip, deviceWithParameters] = data;
         const client = await createConnectModbus(ip);
         if (!client.isOpen) {
             throw new Error('ip address not connecte');
         }
         while (true) {
-            await readFunctions(client, devices);
+            await readFunctions(client, deviceWithParameters);
             await new Promise((resolve) => setTimeout(resolve, CYCLE_INTERVAL));
         }
     } catch (error) {
@@ -48,19 +50,23 @@ async function createConnectModbus(ip: string) {
     return modbus;
 }
 
-async function readFunctions(client: ModbusRTU, devices: Device[]) {
-  for (const device of devices) {
-      const holdings: Register[] = await getHoldingPart(device.parameters);
-      const inputs: Register[] = await getInputPart(device.parameters);
+async function readFunctions(client: any, devices: DeviceWithParameters) {
+  for (const [modbusAddress, parameters] of Object.entries(devices)) {
+      const holdings: Register[] = await getHoldingPart(parameters);
+      const inputs: Register[] = await getInputPart(parameters);
       if (holdings.length > 0) {
           const groups: Group = await getGroupParam(holdings);
           const valueGroups = await readHoldingRegisters(client, groups);
-          await sendDataToQueue({ device: device.device, values: valueGroups, parameters: holdings });
+
+          const typestamp = Date.now();
+          await sendDataToQueue({ device: modbusAddress, values: valueGroups, parameters: holdings, time: typestamp });
       }
       if (inputs.length > 0) {
           const groups: Group = await getGroupParam(inputs);
           const valueGroups = await readInputsRegisters(client, groups);
-          await sendDataToQueue({ device: device.device, values: valueGroups, parameters: inputs });
+
+          const typestamp = Date.now();
+          await sendDataToQueue({ device: modbusAddress, values: valueGroups, parameters: inputs, time: typestamp });
       }
   }
 }
@@ -70,22 +76,45 @@ async function getGroupParam(params: Array<any>) {
     for (const param of params) {
         const matchIndex = groups.findIndex(group => group[0] === param.group);
         if (matchIndex !== -1) {
-            groups[matchIndex][1].push(param.address);
+            groups[matchIndex][1].push({address: param.address, type: param.data_type});
         } else {
-            groups.push([param.group, [param.address]]);
+            groups.push([param.group, [{address: param.address, type: param.data_type}]]);
         }
     }
     return await getGroupAndAddress(groups);
 }
 
-async function getGroupAndAddress(groups: Array<any>) {
-    let groupWithAddress: any = {};
-    for (const group of groups) {
-        const startAddress = Math.min(...group[1]) - 1;
-        const countReadAddress = Math.max(...group[1]) - Math.min(...group[1]) + 1;
-        groupWithAddress[group[0]] = [startAddress, countReadAddress];
+async function getGroupAndAddress(groups: Array<[string, AddressType[]]>) {
+  const groupWithAddress: { [key: string]: [number, number] } = {};
+  for (const [groupName, group] of groups) {
+    const maxAddress = await getMaxAddressInGroup(group);
+    const addDoubleLastRegister = await checkDoubleLengthLastRegister(
+      maxAddress
+    );
+    const startAddress = Math.min(...group.map(({ address }) => address)) - 1;
+    const countReadAddress =
+      Math.max(...group.map(({ address }) => address)) -
+      startAddress +
+      addDoubleLastRegister;
+    groupWithAddress[groupName] = [startAddress, countReadAddress];
+  }
+  return groupWithAddress;
+}
+
+type AddressType = { address: number; type: string };
+
+async function getMaxAddressInGroup(group: AddressType[]): Promise<AddressType> {
+  const resolvedGroup = await Promise.all(group);
+  return resolvedGroup.reduce((max: AddressType, current: AddressType) => {
+    if (current.address > max.address) {
+      return current;
     }
-    return groupWithAddress;
+    return max;
+  }, {address: -Infinity, type: 'uint16'});
+}
+
+async function checkDoubleLengthLastRegister(parameter: AddressType) {
+  return parameter.type === "uint32" || parameter.type === "float32" ? 1 : 0;
 }
 
 async function getHoldingPart(data: Register[]): Promise<Register[]> {
@@ -109,7 +138,7 @@ async function readHoldingRegisters(modbus: any, groups: any) {
       }
       return data;
   } catch (error) {
-      console.error(error);
+      console.log(error);
   }
 }
 
@@ -118,11 +147,12 @@ async function readInputsRegisters(modbus: any, groups: any) {
       const data = [];
       for (const [groupName, address] of Object.entries(groups)) {
           const registers = await modbus.readInputRegisters(groups[groupName][0], groups[groupName][1]);
+          console.log('registerWrite',groups[groupName][0],groups[groupName][1], registers)
           data.push(registers);
       }
       return data;
   } catch (error) {
-      console.error(error);
+      console.log(error);
   }
 }
 

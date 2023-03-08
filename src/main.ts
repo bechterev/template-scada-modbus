@@ -6,14 +6,21 @@ import { resolvers } from "./resolveDevice";
 import { Load } from './tcp/cycles';
 import "reflect-metadata";
 import DatabaseService from './services/db'
+import { makeExecutableSchema } from '@graphql-tools/schema';
+import { applyMiddleware } from 'graphql-middleware';
+import { permissions } from './auth';
 
+const schema = makeExecutableSchema({ typeDefs, resolvers })
+const schemaWithMiddleware = applyMiddleware(schema,permissions)
 
-const server = new ApolloServer({ typeDefs, resolvers, 
+const server = new ApolloServer({ 
+  schema: schemaWithMiddleware,
+  context: ({ req }: any) => ({ token: req?.headers?.authorization || '' }),
 plugins: [ApolloServerPluginLandingPageLocalDefault({ embed: true })] });
 
 const app = express();
 let load = new Load(new DatabaseService())
-load.analizeInitData();
+load.analyzeInitialData();
 
 server.start().then(res => {
   server.applyMiddleware({ app });
